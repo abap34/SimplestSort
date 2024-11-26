@@ -31,3 +31,36 @@ Fixpoint swap (l : list nat) (i j : nat) : list nat :=
 Compute swap [1; 2; 3; 4; 5] 1 2.
 Compute swap [1; 2; 3; 4; 5] 0 4.
 
+
+Fixpoint inner_loop (arr : list nat) (n i m : nat) : list nat :=
+  match m with
+  | 0 => arr
+  | S m' =>
+      let j := n - m in
+      let arr' :=
+        if nth i arr 0 <? nth j arr 0 then
+          swap arr i j
+        else
+          arr in
+      inner_loop arr' n i m'
+  end.
+
+Fixpoint outer_loop (arr : list nat) (n m : nat) : list nat :=
+  match m with
+  | 0 => arr
+  | S m' =>
+      let i := n - m in
+      let arr' := inner_loop arr n i n in
+      outer_loop arr' n m'
+  end.
+
+Definition simplest_sort (arr : list nat) : list nat :=
+  let n := length arr in
+  outer_loop arr n n.
+
+Compute simplest_sort [1; 3; 2; 5; 4].
+Compute simplest_sort [4; 3; 1; 4; 2].
+
+Compute simplest_sort [5; 4; 3; 2; 1].
+Compute simplest_sort [1; 2; 3; 4; 5].
+
