@@ -31,3 +31,15 @@ Fixpoint swap (l : list nat) (i j : nat) : list nat :=
 Compute swap [1; 2; 3; 4; 5] 1 2.
 Compute swap [1; 2; 3; 4; 5] 0 4.
 
+
+Fixpoint simplest_sort (arr : list nat) (n i j : nat) : list nat :=
+  if i <? n then
+    if j <? n then
+      if nth i arr 0 <=? nth j arr 0 then
+        simplest_sort (swap arr i j) n i (j + 1)
+      else
+        simplest_sort arr n i (j + 1)
+    else
+      simplest_sort arr n (i + 1) 0
+  else
+    arr.
