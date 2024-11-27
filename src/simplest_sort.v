@@ -88,4 +88,20 @@ Proof.
   - destruct i as [| i']; simpl.
     + reflexivity.
     + f_equal; apply IH; apply PeanoNat.Nat.succ_lt_mono, Hlen.
+Qed. 
+
+(* a ++ b ++ c <- peerm --> c ++ b ++ a  を示す *)
+Lemma app3_permutation : forall (a b c : list nat),
+  Permutation (a ++ b ++ c) (c ++ b ++ a).
+Proof.
+  intros a b c.
+  rewrite app_assoc.
+  rewrite app_assoc with (l := c).
+  rewrite Permutation_app_comm.
+
+  rewrite <- app_assoc with (l := c).
+
+  apply Permutation_app_head.
+  rewrite Permutation_app_comm  with (l := b).
+  apply Permutation_refl.
 Qed.
