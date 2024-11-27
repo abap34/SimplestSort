@@ -71,3 +71,21 @@ Compute simplest_sort [4; 3; 1; 4; 2].
 Compute simplest_sort [5; 4; 3; 2; 1].
 Compute simplest_sort [1; 2; 3; 4; 5].
 
+(* --- 正しさの証明 --- *)
+(* swap が Permutation であることを証明する *)
+Require Import Coq.Sorting.Permutation.
+
+
+(* もうちょっと考える *)
+Lemma firstn_nth : forall (l : list nat) (i : nat),
+  i < length l ->
+  firstn i l ++ [nth i l 0] = firstn (S i) l.
+Proof.
+  intros l i Hlen.
+  generalize dependent i.
+  induction l as [| x xs IH]; intros i Hlen.
+  - destruct i; simpl in Hlen; inversion Hlen.
+  - destruct i as [| i']; simpl.
+    + reflexivity.
+    + f_equal; apply IH; apply PeanoNat.Nat.succ_lt_mono, Hlen.
+Qed.
