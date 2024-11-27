@@ -7,29 +7,36 @@ Require Import List.
 Import ListNotations.
 Require Import Arith.
 
+
 (* --- SimpleSort 自体の実装 --- *)
-
 (* まずスワップ *)
-Fixpoint swap (l : list nat) (i j : nat) : list nat :=
-  match l with
-  | [] => []         
-  (* 空リストの場合は何もしない *)
-  | x :: xs =>       
-  (* head, tail に分ける *)
-    match i, j with  
-    | 0, 0 => x :: xs 
-     (* i = j = 0 の場合はそのままくっつける *)
-    | 0, S j' => nth j' xs x :: firstn j' xs ++ x :: skipn (S j') xs  
-    (* i = 0, j = S j' の場合は [j' 番目, 0 ~ j' 番目, x, j' + 1 ~ 最後] *)
-    | S i', 0 => nth i' xs x :: firstn i' xs ++ x :: skipn (S i') xs
-    (* i = S i', j = 0 の場合は [i' 番目, 0 ~ i' 番目, x, i' + 1 ~ 最後]*)
-    | S i', S j' => x :: swap xs i' j'
-    (* それ以外の場合, head はそのままで、 tail のインデックスを一つ減らして再帰 *)
-    end
-  end.
+Definition swap (l : list nat) (i j : nat) : list nat :=
+  if i =? j then
+    l
+  else
+    if i <? j then
+      firstn i l ++ [nth j l 0] ++ skipn (S i) (firstn j l) ++ [nth i l 0] ++ skipn (S j) l
+    else
+      firstn j l ++ [nth i l 0] ++ skipn (S j) (firstn i l) ++ [nth j l 0] ++ skipn (S i) l.
 
-Compute swap [1; 2; 3; 4; 5] 1 2.
+
+Compute swap [1; 2; 3; 4; 5] 1 2. 
+(* 1; 3; 2; 4; 5 *)
+
+Compute swap [1; 2; 3; 4; 5] 2 1.
+(* 1; 3; 2; 4; 5 *)
+
 Compute swap [1; 2; 3; 4; 5] 0 4.
+(* 5; 2; 3; 4; 1 *)
+Compute swap [1; 2; 3; 4; 5] 4 0.
+(* 5; 2; 3; 4; 1 *)
+
+Compute swap [1; 2; 3; 4; 5] 0 0.
+(* 1; 2; 3; 4; 5 *)
+
+Compute swap [1; 2; 3; 4; 5] 2 2.
+(* 1; 2; 3; 4; 5 *)
+
 
 
 Fixpoint inner_loop (arr : list nat) (n i m : nat) : list nat :=
@@ -64,3 +71,37 @@ Compute simplest_sort [4; 3; 1; 4; 2].
 Compute simplest_sort [5; 4; 3; 2; 1].
 Compute simplest_sort [1; 2; 3; 4; 5].
 
+(* --- 正しさの証明 --- *)
+(* swap が Permutation であることを証明する *)
+Require Import Coq.Sorting.Permutation.
+
+
+(* もうちょっと考える *)
+Lemma firstn_nth : forall (l : list nat) (i : nat),
+  i < length l ->
+  firstn i l ++ [nth i l 0] = firstn (S i) l.
+Proof.
+  intros l i Hlen.
+  generalize dependent i.
+  induction l as [| x xs IH]; intros i Hlen.
+  - destruct i; simpl in Hlen; inversion Hlen.
+  - destruct i as [| i']; simpl.
+    + reflexivity.
+    + f_equal; apply IH; apply PeanoNat.Nat.succ_lt_mono, Hlen.
+Qed. 
+
+(* a ++ b ++ c <- peerm --> c ++ b ++ a  を示す *)
+Lemma app3_permutation : forall (a b c : list nat),
+  Permutation (a ++ b ++ c) (c ++ b ++ a).
+Proof.
+  intros a b c.
+  rewrite app_assoc.
+  rewrite app_assoc with (l := c).
+  rewrite Permutation_app_comm.
+
+  rewrite <- app_assoc with (l := c).
+
+  apply Permutation_app_head.
+  rewrite Permutation_app_comm  with (l := b).
+  apply Permutation_refl.
+Qed.
