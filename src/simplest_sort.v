@@ -105,3 +105,33 @@ Proof.
   rewrite Permutation_app_comm  with (l := b).
   apply Permutation_refl.
 Qed.
+
+
+
+Lemma firstn_skipn_firstn : forall (l : list nat) (i j : nat),
+  (i <= j /\ j < length l /\ i < length l) ->
+  firstn i l ++ skipn i (firstn j l) = firstn j l.
+Proof.
+  intros l i j [Hi_lt [Hj_len Hi_len]].
+  revert i j Hi_lt Hj_len Hi_len.
+  induction l as [| x xs IH]; intros.
+  - (* Case: l = [] *)
+    simpl in Hj_len. (* 長さ 0 のリストで j が 0 未満になる矛盾を処理 *)
+    destruct j; simpl in Hj_len; inversion Hj_len.
+  - (* Case: l = x :: xs *)
+    destruct i as [| i']; destruct j as [| j']; simpl in *.
+    + reflexivity.
+
+    + (* Subcase: i = 0, j = S j' *)
+      simpl. reflexivity.
+    + (* Subcase: i = S i', j = 0 *)
+      exfalso. (* i < j の仮定が矛盾している *)
+      inversion Hi_lt.
+    + (* Subcase: i = S i', j = S j' *)
+      simpl.
+      f_equal.
+      apply IH.
+      apply PeanoNat.Nat.succ_le_mono, Hi_lt.
+      apply PeanoNat.Nat.succ_lt_mono, Hj_len.
+      apply PeanoNat.Nat.succ_lt_mono, Hi_len.
+Qed.  
