@@ -9,6 +9,7 @@ Require Import Arith.
 
 
 (* --- SimpleSort 自体の実装 --- *)
+
 (* まずスワップ *)
 Definition swap (l : list nat) (i j : nat) : list nat :=
   if i =? j then
@@ -38,7 +39,6 @@ Compute swap [1; 2; 3; 4; 5] 2 2.
 (* 1; 2; 3; 4; 5 *)
 
 
-
 Fixpoint inner_loop (arr : list nat) (n i m : nat) : list nat :=
   match m with
   | 0 => arr
@@ -66,17 +66,25 @@ Definition simplest_sort (arr : list nat) : list nat :=
   outer_loop arr n n.
 
 Compute simplest_sort [1; 3; 2; 5; 4].
+(* [1; 2; 3; 4; 5] *)
+
 Compute simplest_sort [4; 3; 1; 4; 2].
+(* [1; 2; 3; 4; 5] *)
 
 Compute simplest_sort [5; 4; 3; 2; 1].
+(* [1; 2; 3; 4; 5] *)
+
 Compute simplest_sort [1; 2; 3; 4; 5].
+(* [1; 2; 3; 4; 5] *)
+
+
+
 
 (* --- 正しさの証明 --- *)
 (* swap が Permutation であることを証明する *)
 Require Import Coq.Sorting.Permutation.
 
 
-(* もうちょっと考える *)
 Lemma firstn_nth : forall (l : list nat) (i : nat),
   i < length l ->
   firstn i l ++ [nth i l 0] = firstn (S i) l.
@@ -90,7 +98,8 @@ Proof.
     + f_equal; apply IH; apply PeanoNat.Nat.succ_lt_mono, Hlen.
 Qed. 
 
-(* a ++ b ++ c <- peerm --> c ++ b ++ a  を示す *)
+
+(* a ++ b ++ c <-- perm --> c ++ b ++ a *)
 Lemma app3_permutation : forall (a b c : list nat),
   Permutation (a ++ b ++ c) (c ++ b ++ a).
 Proof.
@@ -100,13 +109,10 @@ Proof.
   rewrite Permutation_app_comm.
 
   rewrite <- app_assoc with (l := c).
-
   apply Permutation_app_head.
   rewrite Permutation_app_comm  with (l := b).
   apply Permutation_refl.
 Qed.
-
-
 
 Lemma firstn_skipn_firstn : forall (l : list nat) (i j : nat),
   (i <= j /\ j < length l /\ i < length l) ->
@@ -115,19 +121,18 @@ Proof.
   intros l i j [Hi_lt [Hj_len Hi_len]].
   revert i j Hi_lt Hj_len Hi_len.
   induction l as [| x xs IH]; intros.
-  - (* Case: l = [] *)
-    simpl in Hj_len. (* 長さ 0 のリストで j が 0 未満になる矛盾を処理 *)
+  - (* l = [] *)
+    simpl in Hj_len. 
     destruct j; simpl in Hj_len; inversion Hj_len.
-  - (* Case: l = x :: xs *)
+  - (* Cl = x :: xs *)
     destruct i as [| i']; destruct j as [| j']; simpl in *.
     + reflexivity.
-
-    + (* Subcase: i = 0, j = S j' *)
+    + (*  i = 0, j = S j' *)
       simpl. reflexivity.
-    + (* Subcase: i = S i', j = 0 *)
-      exfalso. (* i < j の仮定が矛盾している *)
+    + (*  i = S i', j = 0 *)
+      exfalso. 
       inversion Hi_lt.
-    + (* Subcase: i = S i', j = S j' *)
+    + (*  i = S i', j = S j' *)
       simpl.
       f_equal.
       apply IH.
@@ -137,34 +142,25 @@ Proof.
 Qed.  
   
 
-
+(* swap のための分割が Permutation であるという補題 *)
 Lemma decompose_permutation : forall (l : list nat) (i j : nat),
  (i < j) /\ (j < length l) /\ (i < length l) ->
     Permutation l (
      firstn i l ++ [nth i l 0] ++ skipn (S i) (firstn j l) ++ [nth j l 0] ++ skipn (S j) l
     ).
 Proof.
-   (* firstn_nth を使って証明する *)
   intros l i j [Hi_lt [Hj_len Hi_len]].
-
-  (* 左からかっこつけていく *)
   rewrite app_assoc.
-  (* 最初の 2 項まとめる *)
   rewrite firstn_nth with (i := i) by apply Hi_len.
-  (*  また最初の 2 項まとめる *)
-    rewrite app_assoc.
-    rewrite firstn_skipn_firstn with (i := S i) (j := j).
-   - rewrite app_assoc.
-     rewrite firstn_nth with (i := j) (l := l) by apply Hj_len.
-     rewrite firstn_skipn with (n := (S j)) (l := l).
-     apply Permutation_refl.
-
-
-   - 
-      split.
+  rewrite app_assoc.
+  rewrite firstn_skipn_firstn with (i := S i) (j := j).
+  - rewrite app_assoc.
+    rewrite firstn_nth with (i := j) (l := l) by apply Hj_len.
+    rewrite firstn_skipn with (n := (S j)) (l := l).
+    apply Permutation_refl.
+   -  split.
       (* i < j -> S i <= j *)
       + apply Hi_lt.
-      
       + split.
         (* j < length l *)
         * apply Hj_len.
@@ -172,5 +168,4 @@ Proof.
         * apply (Nat.le_lt_trans (S i) j (length l)).
           apply Hi_lt.
           apply Hj_len.
-   
 Qed.
