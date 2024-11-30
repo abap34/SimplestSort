@@ -4,7 +4,7 @@ A Coq proof of SimplestSort (https://arxiv.org/abs/2110.01111).
 
 # Roadmap
 
-- [x] Proof of Permutation
+- [ ] Proof of Permutation
 
 - [ ] Proof of Sorted
 
@@ -14,19 +14,19 @@ A Coq proof of SimplestSort (https://arxiv.org/abs/2110.01111).
 
 First, we prove that the output of `simplest_sort` is a permutation of the input list.
 
-```
+```coq
 simplest_sort_permutation : forall l, Permutation l (simplest_sort l).
 ```
 
 To prove this, we have to prove that `swap` is a permutation of the input list.
 
-```
+```coq
 swap_permutation : forall l i j, Permutation l (swap l i j).
 ```
 
 For this, we prove some lemmas.
 
-```
+```coq
 Lemma firstn_nth : forall (l : list nat) (i : nat),
   i < length l ->
   firstn i l ++ [nth i l 0] = firstn (S i) l.
@@ -43,11 +43,16 @@ Lemma decompose_permutation : forall (l : list nat) (i j : nat),
 
 Using these lemmas, we can prove `swap_permutation` as follows.
 
-1. Decompose the input list into 5 parts. (we call it `decompose l`).
-2. Apply `decompose_permutation`, then we get `Permutation l (decompose l)`.
-3. Remove first and last parts by `Permutation_app_inv_l`, `Permutation_app_inv_r`.
-4. Apply `app3_permutation` to the remaining parts.
-5. After that, we get the result that `Permutation (decompose l) (swap l i j)`.
-6. Finally, we can prove `Permutation l (swap l i j)` by `Permutation_trans`.
+1. Decompose the input list into 5 parts (referred to as `decompose l`).
+2. Apply `decompose_permutation`, resulting in `Permutation l (decompose l)`.
+3. To prove `Permutation l (swap l i j)`, it suffices to prove 
+   `Permutation (decompose l) (swap l i j)` because `Permutation` is transitive.
+4. `swap l i j` reduces to swapping the second and fourth elements of `decompose l`.
+   Therefore, use `Permutation_app_inv_l` and `Permutation_app_inv_r` to remove
+   the first and last parts, and then apply `Permutation_app3` to swap the
+   second and fourth elements.
+5. This results in `Permutation (decompose l) (swap l i j)`.
+6. Finally, use `Permutation_trans` to prove `Permutation l (swap l i j)`.
+
 
 
