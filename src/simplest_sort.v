@@ -135,3 +135,42 @@ Proof.
       apply PeanoNat.Nat.succ_lt_mono, Hj_len.
       apply PeanoNat.Nat.succ_lt_mono, Hi_len.
 Qed.  
+  
+
+
+Lemma decompose_permutation : forall (l : list nat) (i j : nat),
+ (i < j) /\ (j < length l) /\ (i < length l) ->
+    Permutation l (
+     firstn i l ++ [nth i l 0] ++ skipn (S i) (firstn j l) ++ [nth j l 0] ++ skipn (S j) l
+    ).
+Proof.
+   (* firstn_nth を使って証明する *)
+  intros l i j [Hi_lt [Hj_len Hi_len]].
+
+  (* 左からかっこつけていく *)
+  rewrite app_assoc.
+  (* 最初の 2 項まとめる *)
+  rewrite firstn_nth with (i := i) by apply Hi_len.
+  (*  また最初の 2 項まとめる *)
+    rewrite app_assoc.
+    rewrite firstn_skipn_firstn with (i := S i) (j := j).
+   - rewrite app_assoc.
+     rewrite firstn_nth with (i := j) (l := l) by apply Hj_len.
+     rewrite firstn_skipn with (n := (S j)) (l := l).
+     apply Permutation_refl.
+
+
+   - 
+      split.
+      (* i < j -> S i <= j *)
+      + apply Hi_lt.
+      
+      + split.
+        (* j < length l *)
+        * apply Hj_len.
+        (* S i < length l *)
+        * apply (Nat.le_lt_trans (S i) j (length l)).
+          apply Hi_lt.
+          apply Hj_len.
+   
+Qed.
