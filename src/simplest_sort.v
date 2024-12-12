@@ -96,6 +96,7 @@ Proof.
   - destruct i as [| i']; simpl.
     + reflexivity.
     + f_equal; apply IH; apply PeanoNat.Nat.succ_lt_mono, Hlen.
+    + f_equal; apply IH; apply Nat.succ_lt_mono, Hlen.
 Qed. 
 
 
@@ -139,17 +140,23 @@ Proof.
       apply PeanoNat.Nat.succ_le_mono, Hi_lt.
       apply PeanoNat.Nat.succ_lt_mono, Hj_len.
       apply PeanoNat.Nat.succ_lt_mono, Hi_len.
+      apply Nat.succ_le_mono, Hi_lt.
+      apply Nat.succ_lt_mono, Hj_len.
+      apply Nat.succ_lt_mono, Hi_len.
 Qed.  
   
+
+Definition decompose (l : list nat) (i j : nat) : list nat :=
+  firstn i l ++ [nth i l 0] ++ skipn (S i) (firstn j l) ++ [nth j l 0] ++ skipn (S j) l.
+
 
 (* swap のための分割が Permutation であるという補題 *)
 Lemma decompose_permutation : forall (l : list nat) (i j : nat),
  (i < j) /\ (j < length l) /\ (i < length l) ->
-    Permutation l (
-     firstn i l ++ [nth i l 0] ++ skipn (S i) (firstn j l) ++ [nth j l 0] ++ skipn (S j) l
-    ).
+    Permutation (decompose l i j) l.
 Proof.
   intros l i j [Hi_lt [Hj_len Hi_len]].
+  unfold decompose.
   rewrite app_assoc.
   rewrite firstn_nth with (i := i) by apply Hi_len.
   rewrite app_assoc.
