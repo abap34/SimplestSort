@@ -6,7 +6,7 @@
 Require Import List.
 Import ListNotations.
 Require Import Arith.
-
+Require Import Lia.
 
 (* --- SimpleSort 自体の実装 --- *)
 
@@ -95,7 +95,6 @@ Proof.
   - destruct i; simpl in Hlen; inversion Hlen.
   - destruct i as [| i']; simpl.
     + reflexivity.
-    + f_equal; apply IH; apply PeanoNat.Nat.succ_lt_mono, Hlen.
     + f_equal; apply IH; apply Nat.succ_lt_mono, Hlen.
 Qed. 
 
@@ -137,9 +136,6 @@ Proof.
       simpl.
       f_equal.
       apply IH.
-      apply PeanoNat.Nat.succ_le_mono, Hi_lt.
-      apply PeanoNat.Nat.succ_lt_mono, Hj_len.
-      apply PeanoNat.Nat.succ_lt_mono, Hi_len.
       apply Nat.succ_le_mono, Hi_lt.
       apply Nat.succ_lt_mono, Hj_len.
       apply Nat.succ_lt_mono, Hi_len.
@@ -176,3 +172,54 @@ Proof.
           apply Hi_lt.
           apply Hj_len.
 Qed.
+
+
+(* 
+
+swap が perm の証明の方針:
+
+[i = j のとき]
+ → swap (l i j) = l より. 
+
+[i != j のとき]
+
+1. decompose <-- perm --> l
+2. decompose <-- perm --> swap
+
+で l <-- perm --> swap が示せる. (perm の trans)
+
+ *)
+(* decompose <-- perm --> swap *)
+Lemma decompose_swap_permutation : forall (l : list nat) (i j : nat),
+  (i < j) /\ (j < length l) /\ (i < length l) ->
+  Permutation (decompose l i j) (swap l i j).
+Proof.
+  intros l i j [Hi_lt [Hj_len Hi_len]].
+  unfold swap.
+  destruct (i =? j) eqn:Hij_eq.
+  - exfalso.
+    apply Nat.eqb_eq in Hij_eq.
+    (* i < j  ->  i != j で矛盾 *)
+    apply Nat.lt_neq in Hi_lt.
+    exact (Hi_lt Hij_eq).
+  - destruct (i <? j) eqn:Hij_lt.
+    + (* i < j *)
+      unfold decompose.
+      apply Permutation_app_head.
+
+      (* 右とそれ以外に持ってく *)
+      rewrite app_assoc.
+      rewrite app_assoc.
+      rewrite app_assoc.
+      rewrite app_assoc.
+      apply Permutation_app_tail with (tl := skipn (S j) l).
+
+      rewrite <- app_assoc.
+      rewrite <- app_assoc.
+      apply app3_permutation.
+    + (* j < i *)
+      exfalso.
+      apply Nat.ltb_ge in Hij_lt.
+      lia.
+Qed.
+
